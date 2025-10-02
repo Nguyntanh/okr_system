@@ -1,0 +1,51 @@
+# Logs
+*.log
+/storage/logs/*.log
+
+# Environment files
+.env
+.env.backup
+.env.production
+.env.*
+
+# Dependency directories
+/vendor/
+node_modules/
+
+# Build directories
+/public/build/
+public/hot
+
+# Storage
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/pail*
+/storage/app/public
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+
+# Cache
+/bootstrap/cache/*
+.phpunit.result.cache
+
+# IDE and editor files
+.idea/
+.vscode/
+.zed
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+Homestead.yaml
+Homestead.json
+
+# Auth
+/auth.json
+
+# Vite
+vite.config.js

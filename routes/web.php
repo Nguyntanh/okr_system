@@ -28,8 +28,8 @@ Route::group(['middleware' => ['web']], function () {
     Route::get('/auth/forgot', [AuthController::class, 'forgotPassword'])->name('auth.forgot');
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
 
-    // // Route dashboard
-    // Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+    // Route dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
 
     // //Routes cho Cycle
     // Route::resource('cycles', CycleController::class);

@@ -123,4 +123,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'api' => [
+        // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStatefulFromSanctum::class,
+        'throttle:api',
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    ],
 ];

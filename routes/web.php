@@ -19,14 +19,18 @@ Route::get('/landingpage', function () {
     return view('landingpage');
 })->name('landingpage');
 
-Route::group(['middleware' => ['web']], function () {
+// Route::group(['middleware' => ['web']], function () {
     // Route xác thực
     Route::get('/login', [AuthController::class, 'redirectToCognito'])->name('login');
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/signup', [AuthController::class, 'redirectToSignup'])->name('auth.signup');
-    Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
+    // Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
     Route::get('/auth/forgot', [AuthController::class, 'forgotPassword'])->name('auth.forgot');
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+    //api
+    
+    Route::get('/auth/callback', [AuthController::class, 'apiHandleCallback'])->name('auth.callback');
 
     // Route dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
@@ -66,4 +70,4 @@ Route::group(['middleware' => ['web']], function () {
     // Route::delete('/objectives/{objective}/key-results/{kr}', 
     //     [KeyResultController::class, 'destroy']
     // )->name('key_results.destroy');
-});
+// });

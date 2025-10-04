@@ -125,6 +125,85 @@ class AuthController extends Controller
         }
     }
 
+    // API Login (trả JSON cho React)
+    public function apiLogin(Request $request)
+    {
+        if ($request->header('Accept') === 'application/json') {
+            $base = rtrim(env('AWS_COGNITO_DOMAIN', 'https://ap-southeast-2rqig6bh9c.auth.ap-southeast-2.amazoncognito.com'), '/');
+            $url = $base . '/login?' . http_build_query([
+                'client_id' => config('services.cognito.client_id', '3ar8acocnqav49qof9qetdj2dj'),
+                'response_type' => 'code',
+                'scope' => 'email openid phone aws.cognito.signin.user.admin',
+                'redirect_uri' => env('COGNITO_REDIRECT_URI', 'http://localhost:8000/auth/callback'),
+            ]);
+            return response()->json(['redirect_url' => $url]);
+        }
+        return $this->redirectToCognito(); // Giữ logic cũ cho web
+    }
+
+    // API Handle Callback (trả JSON cho React)
+    public function apiHandleCallback(Request $request)
+    {
+        if ($request->header('Accept') === 'application/json') {
+            $code = $request->query('code');
+            if (!$code) {
+                return response()->json(['error' => 'No authorization code'], 400);
+            }
+
+            $tokenUrl = rtrim(env('AWS_COGNITO_DOMAIN', 'https://ap-southeast-2rqig6bh9c.auth.ap-southeast-2.amazoncognito.com'), '/').'/oauth2/token';
+            $requestData = [
+                'grant_type' => 'authorization_code',
+                'client_id' => config('services.cognito.client_id', '3ar8acocnqav49qof9qetdj2dj'),
+                'code' => $code,
+                'redirect_uri' => env('COGNITO_REDIRECT_URI', 'http://localhost:8000/auth/callback'),
+            ];
+
+            $clientSecret = env('AWS_COGNITO_CLIENT_SECRET');
+            if ($clientSecret) {
+                $requestData['client_secret'] = $clientSecret;
+            }
+
+            $response = Http::asForm()->post($tokenUrl, $requestData);
+
+            if ($response->failed()) {
+                Log::error("Token request failed: " . $response->body());
+                return response()->json(['error' => 'Failed to get token'], 500);
+            }
+
+            $tokens = $response->json();
+            $accessToken = $tokens['access_token'] ?? null;
+            $idToken = $tokens['id_token'] ?? null;
+
+            if (!$accessToken || !$idToken) {
+                return response()->json(['error' => 'Invalid token response'], 400);
+            }
+
+            $tokenParts = explode('.', $idToken);
+            $payload = base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[1]));
+            $userData = json_decode($payload, true);
+            $email = $userData['email'] ?? null;
+            $sub = $userData['sub'] ?? null;
+
+            if (!$email || !$sub) {
+                return response()->json(['error' => 'Invalid user data'], 400);
+            }
+
+            $user = User::updateOrCreate(
+                ['email' => $email],
+                ['sub' => $sub, 'email' => $email]
+            );
+
+            Auth::login($user);
+
+            return response()->json([
+                'access_token' => $accessToken,
+                'id_token' => $idToken,
+                'user' => ['email' => $email, 'sub' => $sub]
+            ]);
+        }
+        return $this->handleCallback($request); // Giữ logic cũ cho web
+    }
+
     // Redirect đến Hosted UI của Cognito
     public function redirectToCognito()
     {
@@ -250,7 +329,7 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect('/dashboard')->with('success', 'Đăng nhập thành công từ ' . $provider);
+        return redirect('http://localhost:5173/TailAdmin')->with('success', 'Đăng nhập thành công từ ' . $provider);
     }
 
     // Phát hiện provider từ token data
